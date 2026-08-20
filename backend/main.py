@@ -54,9 +54,23 @@ def format_prediction_response(customer_dict: dict) -> dict:
     
     # Top 3 SHAP drivers
     top_3_drivers = shap_res.get("top_features", [])[:3]
-    
+
+    # Echo the input feature values back so the UI can render a behavioural
+    # profile without a second round trip.
+    features = {}
+    for key in ('Account Length', 'VMail Message', 'CustServ Calls', 'Intl Calls',
+                'Day Calls', 'Eve Calls', 'Night Calls'):
+        value = customer_dict.get(key)
+        if value is None:
+            continue
+        try:
+            features[key] = int(value)
+        except (TypeError, ValueError):
+            features[key] = value
+
     return {
         "phone_number": pred_res["phone_number"],
+        "features": features,
         "upsell_probability": pred_res["upsell_probability"],
         "raw_model_eligible": pred_res["raw_model_eligible"],
         "guardrail_triggered": pred_res["guardrail_triggered"],
