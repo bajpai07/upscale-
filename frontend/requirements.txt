@@ -2,3 +2,5 @@ streamlit
 requests
 pandas
 matplotlib
+google-genai
+google-generativeai

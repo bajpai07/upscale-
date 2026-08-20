@@ -7,3 +7,5 @@ joblib
 pandas
 numpy
 pydantic
+google-genai
+google-generativeai
