@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Backend API Configuration
-BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
+BACKEND_URL = os.environ.get("BACKEND_URL", "https://telco-upsell-backend.onrender.com")
 
 # Page Configuration
 st.set_page_config(
