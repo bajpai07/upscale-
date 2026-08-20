@@ -93,9 +93,12 @@ def main():
     y_pred_xgb = xgb.predict(X_test)
     y_prob_xgb = xgb.predict_proba(X_test)[:, 1]
 
+    from sklearn.metrics import accuracy_score
+
     print("\n--- MODEL PERFORMANCE METRICS (TEST SET) ---")
     metrics_df = pd.DataFrame({
         'Logistic Regression (Baseline)': {
+            'Accuracy': accuracy_score(y_test, y_pred_lr),
             'Precision': precision_score(y_test, y_pred_lr),
             'Recall': recall_score(y_test, y_pred_lr),
             'F1-Score': f1_score(y_test, y_pred_lr),
@@ -103,6 +106,7 @@ def main():
             'PR-AUC': average_precision_score(y_test, y_prob_lr)
         },
         'XGBoost Classifier (Main Model)': {
+            'Accuracy': accuracy_score(y_test, y_pred_xgb),
             'Precision': precision_score(y_test, y_pred_xgb),
             'Recall': recall_score(y_test, y_pred_xgb),
             'F1-Score': f1_score(y_test, y_pred_xgb),
@@ -111,6 +115,14 @@ def main():
         }
     }).T
     print(metrics_df.round(4).to_string())
+
+    cm_xgb = confusion_matrix(y_test, y_pred_xgb)
+    tn, fp, fn, tp = cm_xgb.ravel()
+    print(f"\nXGBoost Confusion Matrix (Test Set: {len(y_test):,} rows):")
+    print(f" - True Negatives (TN)  : {tn:,}")
+    print(f" - False Positives (FP) : {fp:,}")
+    print(f" - False Negatives (FN) : {fn:,}")
+    print(f" - True Positives (TP)  : {tp:,}")
 
     print("\n--- STEP 4: SHAP Explainability & Feature Importances ---")
     explainer = shap.TreeExplainer(xgb)
