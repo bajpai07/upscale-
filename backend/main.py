@@ -67,6 +67,32 @@ def format_prediction_response(customer_dict: dict) -> dict:
         "explanation_narrative": shap_res["explanation_narrative"]
     }
 
+# Global cached lookup map for memory optimization (loaded once at startup)
+_customer_lookup_map: Optional[Dict[str, dict]] = None
+
+def get_customer_lookup_map() -> Dict[str, dict]:
+    """Load only 8 required columns into a lightweight global dictionary once at startup"""
+    global _customer_lookup_map
+    if _customer_lookup_map is None:
+        if not os.path.exists(PROCESSED_DATA_PATH):
+            _customer_lookup_map = {}
+            return _customer_lookup_map
+            
+        lookup_cols = [
+            'Phone Number', 'Account Length', 'VMail Message', 
+            'CustServ Calls', 'Intl Calls', 'Day Calls', 'Eve Calls', 'Night Calls'
+        ]
+        df_lookup = pd.read_csv(PROCESSED_DATA_PATH, usecols=lookup_cols)
+        _customer_lookup_map = df_lookup.set_index('Phone Number').to_dict(orient='index')
+        del df_lookup  # Free dataframe object memory immediately
+    return _customer_lookup_map
+
+@app.on_event("startup")
+def startup_event():
+    """Pre-warm model pipeline and lookup map at application startup"""
+    load_upsell_pipeline()
+    get_customer_lookup_map()
+
 @app.get("/health")
 def health_check():
     """Health check endpoint"""
@@ -74,7 +100,8 @@ def health_check():
         "status": "healthy",
         "service": "Telco Upsell API",
         "version": "1.0.0",
-        "model_loaded": True
+        "model_loaded": True,
+        "customers_cached": len(get_customer_lookup_map())
     }
 
 @app.post("/predict")
@@ -109,18 +136,14 @@ def predict_upsell_endpoint(payload: Dict[str, Any]):
 @app.get("/customer/{phone_number}")
 def get_customer_prediction(phone_number: str):
     """
-    Lookup a customer from dataset by phone number and return prediction + SHAP explanation.
+    Lookup a customer from memory map by phone number and return prediction + SHAP explanation.
     """
-    if not os.path.exists(PROCESSED_DATA_PATH):
-        raise HTTPException(status_code=500, detail="Processed dataset file not found.")
-        
-    df = pd.read_csv(PROCESSED_DATA_PATH)
-    customer_rows = df[df['Phone Number'] == phone_number]
-    
-    if customer_rows.empty:
+    lookup_map = get_customer_lookup_map()
+    if phone_number not in lookup_map:
         raise HTTPException(status_code=404, detail=f"Customer phone number '{phone_number}' not found.")
         
-    cust_dict = customer_rows.iloc[0].to_dict()
+    cust_dict = dict(lookup_map[phone_number])
+    cust_dict['Phone Number'] = phone_number
     return format_prediction_response(cust_dict)
 
 if __name__ == "__main__":

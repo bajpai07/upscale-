@@ -5,18 +5,13 @@ import numpy as np
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_MODEL_PATH = os.path.normpath(os.path.join(BASE_DIR, "..", "models", "final_upsell_model.joblib"))
 
-_explainer_cache = None
+from src.predict import load_upsell_pipeline
 
 def load_explainer_pipeline(model_path=DEFAULT_MODEL_PATH):
     """
-    Load cached SHAP explainer and model artifact.
+    Reuse shared cached model and explainer pipeline.
     """
-    global _explainer_cache
-    if _explainer_cache is None:
-        if not os.path.exists(model_path):
-            raise FileNotFoundError(f"Model file not found at {model_path}")
-        _explainer_cache = joblib.load(model_path)
-    return _explainer_cache
+    return load_upsell_pipeline(model_path)
 
 def explain_customer_prediction(customer_data: dict) -> dict:
     """
