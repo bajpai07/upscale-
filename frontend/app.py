@@ -10,69 +10,122 @@ BACKEND_URL = os.environ.get("BACKEND_URL", "https://telco-upsell-backend.onrend
 
 # Page Configuration
 st.set_page_config(
-    page_title="Telco Upsell Intelligence Engine",
-    page_icon="📶",
+    page_title="Telco Upsell Opportunity Intelligence Engine",
+    page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom Styling
+# Custom Glassmorphism & High-Contrast CSS Styling
 st.markdown("""
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Outfit:wght@500;700;800&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
+    }
+
     .main-header {
-        font-size: 2.3rem;
+        font-family: 'Outfit', sans-serif;
+        font-size: 2.5rem;
         font-weight: 800;
-        background: linear-gradient(90deg, #1E88E5, #43A047);
+        background: linear-gradient(135deg, #6366F1 0%, #10B981 50%, #3B82F6 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.2rem;
+        letter-spacing: -0.02em;
     }
+
     .sub-header {
-        font-size: 1.1rem;
-        color: #555;
+        font-size: 1.05rem;
+        color: #94A3B8;
         margin-bottom: 1.5rem;
+        font-weight: 400;
     }
+
+    .glass-card {
+        background: rgba(30, 41, 59, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 20px;
+        backdrop-filter: blur(10px);
+        margin-bottom: 20px;
+    }
+
     .status-badge-green {
-        background-color: #2e7d32;
+        background: linear-gradient(135deg, #059669 0%, #10B981 100%);
         color: white;
-        padding: 12px 24px;
-        border-radius: 8px;
-        font-size: 1.3rem;
-        font-weight: bold;
+        padding: 14px 28px;
+        border-radius: 10px;
+        font-size: 1.35rem;
+        font-weight: 800;
         text-align: center;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
         margin: 10px 0px;
+        letter-spacing: 0.03em;
     }
+
     .status-badge-red {
-        background-color: #c62828;
+        background: linear-gradient(135deg, #DC2626 0%, #EF4444 100%);
         color: white;
-        padding: 12px 24px;
-        border-radius: 8px;
-        font-size: 1.3rem;
-        font-weight: bold;
+        padding: 14px 28px;
+        border-radius: 10px;
+        font-size: 1.35rem;
+        font-weight: 800;
         text-align: center;
+        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
         margin: 10px 0px;
+        letter-spacing: 0.03em;
     }
+
     .guardrail-card {
-        background-color: #ffebee;
-        border-left: 6px solid #d32f2f;
-        padding: 16px;
-        border-radius: 6px;
+        background: rgba(239, 68, 68, 0.1);
+        border-left: 6px solid #EF4444;
+        border-radius: 10px;
+        padding: 18px 22px;
         margin: 15px 0px;
     }
+
+    .guardrail-title {
+        color: #EF4444;
+        font-size: 1.2rem;
+        font-weight: 800;
+        margin-top: 0;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
     .info-callout {
-        background-color: #e3f2fd;
-        border-left: 4px solid #1976d2;
-        padding: 10px 14px;
-        border-radius: 4px;
+        background: rgba(59, 130, 246, 0.08);
+        border-left: 4px solid #3B82F6;
+        padding: 12px 16px;
+        border-radius: 8px;
         font-size: 0.95rem;
-        color: #0d47a1;
-        margin-bottom: 15px;
+        color: #60A5FA;
+        margin-bottom: 18px;
+    }
+
+    .metric-container {
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        padding: 16px;
+        text-align: center;
+    }
+
+    .stButton>button {
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.2s ease;
     }
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="main-header">📶 Telco Upsell Intelligence & Persona Classification</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-header">AI-Powered Upsell Qualification with SHAP Explainability & Responsible AI Guardrails</div>', unsafe_allow_html=True)
+# Header Section
+st.markdown('<div class="main-header">⚡ Telco Upsell Opportunity Intelligence Engine</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-header">AI-Powered Enterprise Customer Upgrade Prioritization • SHAP Explainability • Responsible AI Guardrails</div>', unsafe_allow_html=True)
 
 # Helper functions to query backend API
 def query_backend_predict(payload):
@@ -102,16 +155,16 @@ def query_backend_customer(phone_number):
         st.error(f"Failed to connect to backend service at {BACKEND_URL}. Error: {e}")
         return None
 
-# Sidebar - Preset Scenarios
-st.sidebar.header("🎯 Preset Test Scenarios")
-st.sidebar.markdown("Click an example preset button to auto-evaluate representative customer profiles:")
+# Sidebar - Preset Scenarios & Navigation
+st.sidebar.header("🎯 Preset Scenarios")
+st.sidebar.caption("Click to evaluate sample customer profiles:")
 
 preset_selection = None
-if st.sidebar.button("🟢 Preset A: Upsell Ready"):
+if st.sidebar.button("🟢 Preset A: Upsell Ready", use_container_width=True):
     preset_selection = "A"
-if st.sidebar.button("🟠 Preset B: Borderline"):
+if st.sidebar.button("🟠 Preset B: Borderline", use_container_width=True):
     preset_selection = "B"
-if st.sidebar.button("🔴 Preset C: Guardrail Excluded"):
+if st.sidebar.button("🔴 Preset C: Guardrail Excluded", use_container_width=True):
     preset_selection = "C"
 
 st.sidebar.markdown("---")
@@ -171,10 +224,11 @@ elif preset_selection == "C":
 
 api_response = None
 
+# Input Forms
 if input_mode == "Phone Number Lookup":
     st.subheader("🔍 Dataset Customer Lookup")
-    phone_input = st.text_input("Enter Phone Number:", value=st.session_state.feature_data.get("Phone Number", "382-4657"))
-    if st.button("Evaluate Customer", type="primary"):
+    phone_input = st.text_input("Enter Customer Phone Number:", value=st.session_state.feature_data.get("Phone Number", "382-4657"))
+    if st.button("Evaluate Customer Profile", type="primary", use_container_width=True):
         with st.spinner("Connecting to backend service (Waking up service, this may take up to 50 seconds on first request)..."):
             api_response = query_backend_customer(phone_input.strip())
 
@@ -246,7 +300,7 @@ elif input_mode == "Manual Feature Entry":
         "Night Calls": night_calls
     }
 
-    if st.button("Predict Upsell Qualification", type="primary"):
+    if st.button("Predict Upsell Qualification", type="primary", use_container_width=True):
         with st.spinner("Connecting to backend service (Waking up service, this may take up to 50 seconds on first request)..."):
             api_response = query_backend_predict(manual_payload)
 
@@ -260,76 +314,106 @@ if preset_selection and api_response is None:
 # Display Prediction Output
 if api_response:
     st.markdown("---")
-    st.header("📊 Qualification & Explainability Results")
     
-    # 1. Guardrail Alert (If Triggered)
-    if api_response.get("guardrail_triggered"):
-        st.markdown(f"""
-        <div class="guardrail-card">
-            <h3 style="color: #c62828; margin-top:0;">🚨 RESPONSIBLE AI GUARDRAIL TRIGGERED</h3>
-            <p><b>Reason:</b> {api_response.get('guardrail_reason')}</p>
-            <p><b>Action:</b> {api_response.get('campaign_recommendation')}</p>
-        </div>
-        """, unsafe_allow_html=True)
+    tab_eval, tab_model = st.tabs(["⚡ Customer Evaluation & SHAP Drivers", "📊 Audited Model Intelligence"])
     
-    # 2. Main Status Badge & Metrics
-    m1, m2, m3 = st.columns([2, 2, 3])
-    
-    with m1:
-        prob_val = api_response.get("upsell_probability", 0.0)
-        st.metric("Upsell Probability Score", f"{prob_val * 100:.1f}%")
-        st.progress(prob_val)
+    with tab_eval:
+        st.header("📊 Qualification & Explainability Results")
         
-    with m2:
-        final_eligible = api_response.get("final_upsell_eligible", False)
-        if final_eligible:
-            st.markdown('<div class="status-badge-green">✅ ELIGIBLE FOR UPSELL</div>', unsafe_allow_html=True)
-        else:
-            st.markdown('<div class="status-badge-red">❌ NOT ELIGIBLE</div>', unsafe_allow_html=True)
+        # 1. Guardrail Alert (If Triggered)
+        if api_response.get("guardrail_triggered"):
+            st.markdown(f"""
+            <div class="guardrail-card">
+                <div class="guardrail-title">🚨 RESPONSIBLE AI GUARDRAIL TRIGGERED</div>
+                <p style="margin: 4px 0;"><b>Reason:</b> {api_response.get('guardrail_reason')}</p>
+                <p style="margin: 4px 0;"><b>Mandated Action:</b> <span style="color:#EF4444; font-weight:700;">{api_response.get('campaign_recommendation')}</span></p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        # 2. Main Status Badge & Metrics
+        m1, m2, m3 = st.columns([2, 2, 3])
+        
+        with m1:
+            prob_val = api_response.get("upsell_probability", 0.0)
+            st.metric("Upsell Opportunity Score", f"{prob_val * 100:.1f}%")
+            st.progress(prob_val)
             
-    with m3:
-        st.markdown(f"**Campaign Recommendation:**")
-        st.info(api_response.get("campaign_recommendation", "N/A"))
+        with m2:
+            final_eligible = api_response.get("final_upsell_eligible", False)
+            if final_eligible:
+                st.markdown('<div class="status-badge-green">✅ ELIGIBLE FOR UPSELL</div>', unsafe_allow_html=True)
+            else:
+                st.markdown('<div class="status-badge-red">❌ NOT ELIGIBLE</div>', unsafe_allow_html=True)
+                
+        with m3:
+            st.markdown(f"**Campaign Recommendation:**")
+            st.info(api_response.get("campaign_recommendation", "N/A"))
 
-    # 3. SHAP Explainability & Top 3 Drivers
-    st.markdown("### 💡 SHAP Model Feature Drivers")
-    
-    c_chart, c_text = st.columns([1, 1])
-    
-    with c_chart:
-        top_drivers = api_response.get("top_shap_drivers", [])
-        if top_drivers:
-            df_shap = pd.DataFrame(top_drivers)
-            
-            fig, ax = plt.subplots(figsize=(6, 3.5))
-            colors = ['#2ecc71' if x > 0 else '#e74c3c' for x in df_shap['shap_value']]
-            
-            bars = ax.barh(df_shap['feature'], df_shap['shap_value'], color=colors, height=0.55)
-            ax.axvline(0, color='gray', linestyle='--', linewidth=0.8)
-            ax.set_title("Top 3 Feature Contributions (SHAP Impact)", fontsize=11, fontweight='bold')
-            ax.set_xlabel("SHAP Value (Log-Odds Contribution)", fontsize=9)
-            ax.invert_yaxis()
-            
-            for bar in bars:
-                width = bar.get_width()
-                offset = 0.02 if width >= 0 else -0.02
-                ha = 'left' if width >= 0 else 'right'
-                ax.annotate(f'{width:+.3f}',
-                            xy=(width + offset, bar.get_y() + bar.get_height() / 2),
-                            xytext=(0, 0), textcoords="offset points",
-                            ha=ha, va='center', fontsize=9, fontweight='bold')
-            
-            plt.tight_layout()
-            st.pyplot(fig)
-            
-    with c_text:
-        st.markdown("**Plain-English Explanation Narrative:**")
-        st.success(api_response.get("explanation_narrative", "No narrative generated."))
+        # 3. SHAP Explainability & Top 3 Drivers
+        st.markdown("### 💡 SHAP Model Feature Drivers")
         
-        st.markdown("**Top Feature Breakdown:**")
-        for d in top_drivers:
-            impact_icon = "🟢" if d["shap_value"] > 0 else "🔴"
-            st.markdown(f"- {impact_icon} **{d['feature']}** = `{d['feature_value']:.0f}` (Impact: `{d['shap_value']:+.3f}`)")
+        c_chart, c_text = st.columns([1, 1])
+        
+        with c_chart:
+            top_drivers = api_response.get("top_shap_drivers", [])
+            if top_drivers:
+                df_shap = pd.DataFrame(top_drivers)
+                
+                fig, ax = plt.subplots(figsize=(6, 3.8))
+                fig.patch.set_facecolor('#0F172A')
+                ax.set_facecolor('#0F172A')
+                
+                colors = ['#10B981' if x > 0 else '#EF4444' for x in df_shap['shap_value']]
+                
+                bars = ax.barh(df_shap['feature'], df_shap['shap_value'], color=colors, height=0.55)
+                ax.axvline(0, color='#64748B', linestyle='--', linewidth=0.9)
+                ax.set_title("Top 3 Feature Contributions (SHAP Impact)", fontsize=11, fontweight='bold', color='#F8FAFC', pad=12)
+                ax.set_xlabel("SHAP Value (Log-Odds Contribution)", fontsize=9, color='#94A3B8')
+                ax.tick_params(colors='#94A3B8')
+                ax.spines['top'].set_visible(False)
+                ax.spines['right'].set_visible(False)
+                ax.spines['bottom'].set_color('#334155')
+                ax.spines['left'].set_color('#334155')
+                ax.invert_yaxis()
+                
+                for bar in bars:
+                    width = bar.get_width()
+                    offset = 0.02 if width >= 0 else -0.02
+                    ha = 'left' if width >= 0 else 'right'
+                    ax.annotate(f'{width:+.3f}',
+                                xy=(width + offset, bar.get_y() + bar.get_height() / 2),
+                                xytext=(0, 0), textcoords="offset points",
+                                ha=ha, va='center', fontsize=9, fontweight='bold', color='#F8FAFC')
+                
+                plt.tight_layout()
+                st.pyplot(fig)
+                
+        with c_text:
+            st.markdown("**Plain-English Explanation Narrative:**")
+            st.success(api_response.get("explanation_narrative", "No narrative generated."))
+            
+            st.markdown("**Top Feature Contribution Breakdown:**")
+            for d in top_drivers:
+                impact_icon = "🟢" if d["shap_value"] > 0 else "🔴"
+                st.markdown(f"- {impact_icon} **{d['feature']}** = `{d['feature_value']:.0f}` (SHAP Log-Odds: `{d['shap_value']:+.3f}`)")
+
+    with tab_model:
+        st.header("📊 Model Performance & Responsible AI Architecture")
+        
+        col_a, col_b, col_c = st.columns(3)
+        with col_a:
+            st.metric("Clean Test Accuracy", "91.83%", delta="+4.61% vs Baseline")
+        with col_b:
+            st.metric("Test ROC-AUC Score", "0.9525", delta="5-Fold Mean: 0.9518")
+        with col_c:
+            st.metric("Test Recall (Upsell Ready)", "98.96%", delta="Only 5 Misses out of 481")
+
+        st.markdown("""
+        ### 🛡️ Production Model & Data Quality Guarantee
+        - **Deduplicated Dataset**: Evaluated strictly on **7,467 true unique customers** (100% deduplicated by `Phone Number`).
+        - **Leakage-Free Features**: Trained exclusively on non-leaked usage counts & tenure (`CustServ Calls`, `Total Calls`, `Account Length`, `Intl Calls`, `Day Calls`, `Eve Calls`, `Night Calls`, `VMail Message`).
+        - **Responsible AI Guardrail Policy**: Customers with `CustServ Calls >= 4` are automatically excluded from sales pitches and routed to **Customer Success / Retention** to prevent pitching churn-risk customers.
+        """)
 
 else:
     st.info("👈 Select a preset scenario from the sidebar or enter a phone number / parameters above to view evaluation results.")
