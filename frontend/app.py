@@ -1,4 +1,12 @@
 import os
+import sys
+
+# Ensure project root directory is in sys.path for module resolution
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.normpath(os.path.join(BASE_DIR, ".."))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
 import requests
 import streamlit as st
 import pandas as pd
