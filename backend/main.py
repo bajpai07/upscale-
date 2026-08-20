@@ -218,6 +218,99 @@ def get_portfolio_stats_endpoint():
     """
     return get_portfolio_stats()
 
+# Global cached customers list with precomputed predictions
+_precomputed_customers_list: Optional[List[dict]] = None
+
+def get_all_precomputed_customers() -> List[dict]:
+    """Load or generate precomputed predictions for all customers once at startup"""
+    global _precomputed_customers_list
+    if _precomputed_customers_list is None:
+        if not os.path.exists(PROCESSED_DATA_PATH):
+            return []
+            
+        df = pd.read_csv(PROCESSED_DATA_PATH)
+        pipeline = load_upsell_pipeline()
+        xgb_model = pipeline['model']
+        feature_cols = pipeline['feature_cols']
+        
+        if 'Model_Prob' not in df.columns:
+            df['Model_Prob'] = xgb_model.predict_proba(df[feature_cols])[:, 1]
+            
+        df['Raw_Eligible'] = df['Model_Prob'] >= 0.50
+        df['Guardrail_Triggered'] = df['CustServ Calls'] >= 4
+        df['Final_Eligible'] = df['Raw_Eligible'] & (~df['Guardrail_Triggered'])
+        
+        customers = []
+        for _, row in df.iterrows():
+            phone = str(row['Phone Number'])
+            prob = float(row['Model_Prob'])
+            raw_elig = bool(row['Raw_Eligible'])
+            g_trig = bool(row['Guardrail_Triggered'])
+            f_elig = bool(row['Final_Eligible'])
+            
+            if g_trig:
+                rec = "Route to Customer Success / Retention Team (Do NOT Upsell)"
+                reason = "Guardrail Exclusion: Customer Service Calls >= 4 indicates high complaint friction."
+            elif f_elig:
+                rec = "Priority Upsell Pitch - Premium Tier Upgrade"
+                reason = "Model probability >= 50% threshold."
+            else:
+                rec = "Standard Service Tier Maintenance"
+                reason = "Model probability is below 50% threshold."
+                
+            customers.append({
+                "phone_number": phone,
+                "account_length": int(row['Account Length']),
+                "custserv_calls": int(row['CustServ Calls']),
+                "vmail_message": int(row.get('VMail Message', 0)),
+                "intl_calls": int(row.get('Intl Calls', 0)),
+                "day_calls": int(row.get('Day Calls', 0)),
+                "eve_calls": int(row.get('Eve Calls', 0)),
+                "night_calls": int(row.get('Night Calls', 0)),
+                "upsell_probability": round(prob, 4),
+                "raw_model_eligible": raw_elig,
+                "guardrail_triggered": g_trig,
+                "guardrail_reason": reason,
+                "final_upsell_eligible": f_elig,
+                "campaign_recommendation": rec
+            })
+        _precomputed_customers_list = customers
+    return _precomputed_customers_list
+
+@app.get("/customers")
+def get_customers_endpoint(
+    limit: int = 200,
+    offset: int = 0,
+    search: Optional[str] = None,
+    eligible_only: bool = False,
+    guardrail_only: bool = False
+):
+    """
+    Return browsable/searchable list of all customers with precomputed opportunity scores.
+    Zero live ML inference run per page load.
+    """
+    customers = get_all_precomputed_customers()
+    
+    if search:
+        search_str = search.strip().lower()
+        customers = [c for c in customers if search_str in c["phone_number"].lower()]
+        
+    if eligible_only:
+        customers = [c for c in customers if c["final_upsell_eligible"] is True]
+        
+    if guardrail_only:
+        customers = [c for c in customers if c["guardrail_triggered"] is True]
+        
+    total_matches = len(customers)
+    paginated = customers[offset : offset + limit]
+    
+    return {
+        "total_matches": total_matches,
+        "offset": offset,
+        "limit": limit,
+        "customers": paginated
+    }
+
 @app.get("/customer/{phone_number}")
 def get_customer_prediction(phone_number: str):
     """
