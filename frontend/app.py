@@ -77,7 +77,7 @@ st.markdown('<div class="sub-header">AI-Powered Upsell Qualification with SHAP E
 # Helper functions to query backend API
 def query_backend_predict(payload):
     try:
-        response = requests.post(f"{BACKEND_URL}/predict", json=payload, timeout=5)
+        response = requests.post(f"{BACKEND_URL}/predict", json=payload, timeout=60)
         if response.status_code == 200:
             return response.json()
         else:
@@ -89,7 +89,7 @@ def query_backend_predict(payload):
 
 def query_backend_customer(phone_number):
     try:
-        response = requests.get(f"{BACKEND_URL}/customer/{phone_number}", timeout=5)
+        response = requests.get(f"{BACKEND_URL}/customer/{phone_number}", timeout=60)
         if response.status_code == 200:
             return response.json()
         elif response.status_code == 404:
@@ -175,7 +175,7 @@ if input_mode == "Phone Number Lookup":
     st.subheader("🔍 Dataset Customer Lookup")
     phone_input = st.text_input("Enter Phone Number:", value=st.session_state.feature_data.get("Phone Number", "382-4657"))
     if st.button("Evaluate Customer", type="primary"):
-        with st.spinner("Fetching customer evaluation from model backend..."):
+        with st.spinner("Connecting to backend service (Waking up service, this may take up to 50 seconds on first request)..."):
             api_response = query_backend_customer(phone_input.strip())
 
 elif input_mode == "Manual Feature Entry":
@@ -247,7 +247,7 @@ elif input_mode == "Manual Feature Entry":
     }
 
     if st.button("Predict Upsell Qualification", type="primary"):
-        with st.spinner("Executing prediction pipeline & Responsible AI guardrail..."):
+        with st.spinner("Connecting to backend service (Waking up service, this may take up to 50 seconds on first request)..."):
             api_response = query_backend_predict(manual_payload)
 
 # If preset was selected, query backend automatically for initial view
