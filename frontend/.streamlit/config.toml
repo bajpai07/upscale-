@@ -2,3 +2,42 @@
 headless = true
 enableCORS = false
 port = 10000
+
+# ---------------------------------------------------------------------------
+# Light "console" theme: white cards on a soft gray plane, indigo primary,
+# uppercase micro-labels. Kept in sync with the CSS custom properties declared
+# at the top of app.py.
+# ---------------------------------------------------------------------------
+[theme]
+base = "light"
+
+backgroundColor = "#F7F8FA"          # --plane   (page background)
+secondaryBackgroundColor = "#FFFFFF" # --card
+textColor = "#111827"                # --foreground
+primaryColor = "#2563EB"             # --primary (indigo)
+linkColor = "#2563EB"
+
+borderColor = "#E5E7EB"
+dataframeBorderColor = "#E5E7EB"
+dataframeHeaderBackgroundColor = "#F9FAFB"
+codeBackgroundColor = "#F3F4F6"
+codeTextColor = "#374151"
+
+showWidgetBorder = true
+showSidebarBorder = true
+
+baseRadius = "0.5rem"
+buttonRadius = "0.5rem"
+
+font = "Inter, system-ui, -apple-system, 'Segoe UI', sans-serif"
+headingFont = "Inter, system-ui, -apple-system, 'Segoe UI', sans-serif"
+codeFont = "ui-monospace, SFMono-Regular, Menlo, monospace"
+baseFontSize = 14
+headingFontWeights = [600, 600, 600, 600, 600, 600]
+metricValueFontSize = "1.75rem"
+metricValueFontWeight = 600
+
+# Validated light-mode palette (dataviz reference; checked against #FFFFFF).
+chartCategoricalColors = ["#2A78D6", "#EB6834", "#1BAF7A", "#EDA100", "#E87BA4", "#008300", "#4A3AA7", "#E34948"]
+chartSequentialColors = ["#CDE2FB", "#B7D3F6", "#9EC5F4", "#86B6EF", "#6DA7EC", "#5598E7", "#3987E5", "#2A78D6", "#256ABF", "#1C5CAB"]
+chartDivergingColors = ["#1C5CAB", "#2A78D6", "#3987E5", "#86B6EF", "#CDE2FB", "#F0EFEC", "#F5C6C6", "#E34948", "#D03B3B", "#B02525"]
