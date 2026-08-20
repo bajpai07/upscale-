@@ -15,7 +15,6 @@ from sklearn.metrics import (
 )
 from xgboost import XGBClassifier
 
-# Configure directory paths
 PROJECT_DIR = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 PROCESSED_DATA_PATH = os.path.join(PROJECT_DIR, "data", "processed", "cdr_features.csv")
 MODELS_DIR = os.path.join(PROJECT_DIR, "models")
@@ -24,37 +23,31 @@ PLOTS_DIR = os.path.join(PROJECT_DIR, "notebooks", "plots")
 os.makedirs(MODELS_DIR, exist_ok=True)
 os.makedirs(PLOTS_DIR, exist_ok=True)
 
+print("==================================================")
+print(" RETRAINING MODEL ON DEDUPLICATED CLEAN DATASET ")
+print("==================================================")
+
 df = pd.read_csv(PROCESSED_DATA_PATH)
+print(f"Cleaned Dataset Shape: {df.shape[0]:,} rows, {df.shape[1]} columns")
 
-print("==================================================")
-print(" 1. FULL FEATURE IMPORTANCES (PREVIOUS LEAKED MODEL) ")
-print("==================================================")
-all_leakage_features = [
-    'Account Length', 'VMail Message', 
-    'Day Mins', 'Day Calls', 'Day Charge', 
-    'Eve Mins', 'Eve Calls', 'Eve Charge', 
-    'Night Mins', 'Night Calls', 'Night Charge', 
-    'Intl Mins', 'Intl Calls', 'Intl Charge', 
-    'CustServ Calls', 'Total Mins', 'Total Calls', 
-    'Total Charge', 'Avg Charge per Min', 'CustServ Call Ratio'
-]
+# Re-engineer quantiles and unbiased target on clean data
+p60_mins = df['Total Mins'].quantile(0.60)
+p60_charge = df['Total Charge'].quantile(0.60)
 
-# Quick load previous model if available to print full ranking
-old_model_path = os.path.join(MODELS_DIR, "upsell_xgboost_model.joblib")
-if os.path.exists(old_model_path):
-    old_artifact = joblib.load(old_model_path)
-    old_xgb = old_artifact['model']
-    old_fi = pd.DataFrame({
-        'Feature': all_leakage_features,
-        'Importance': old_xgb.feature_importances_
-    }).sort_values(by='Importance', ascending=False).reset_index(drop=True)
-    print(old_fi.to_string(index=True))
+c_not_churn = (df['Churn'] == False)
+c_high_mins = (df['Total Mins'] >= p60_mins)
+c_high_charge = (df['Total Charge'] >= p60_charge)
 
-print("\n==================================================")
-print(" 2. RETRAINING HONEST MODEL (LEAKAGE-FREE FEATURES)")
-print("==================================================")
+df['Upsell_Ready_v2'] = (c_not_churn & c_high_mins & c_high_charge).astype(int)
 
-# Clean, non-leaked feature list
+target_balance = df['Upsell_Ready_v2'].value_counts()
+target_prop = df['Upsell_Ready_v2'].value_counts(normalize=True)
+
+print("\n--- Clean Dataset Target Label Balance (Upsell_Ready_v2) ---")
+print(f" - Not Ready (0): {target_balance.get(0,0):,} ({target_prop.get(0,0)*100:.2f}%)")
+print(f" - Upsell Ready (1): {target_balance.get(1,0):,} ({target_prop.get(1,0)*100:.2f}%)")
+
+# 8 Leakage-Free Features
 honest_features = [
     'Account Length', 
     'VMail Message', 
@@ -66,19 +59,20 @@ honest_features = [
     'Total Calls'
 ]
 
-print(f"Honest Feature Subset ({len(honest_features)} features):")
-print(honest_features)
-
 X = df[honest_features]
-y = df['Upsell_Ready']
+y = df['Upsell_Ready_v2']
 
+print(f"\n--- Stratified 80/20 Train/Test Split ---")
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.20, random_state=42, stratify=y
 )
 
+print(f"Train size: {len(X_train):,} rows (Positives: {sum(y_train):,}, {y_train.mean()*100:.2f}%)")
+print(f"Test size:  {len(X_test):,} rows (Positives: {sum(y_test):,}, {y_test.mean()*100:.2f}%)")
+
 pos_weight = (len(y_train) - sum(y_train)) / sum(y_train)
 
-# --- Logistic Regression Baseline ---
+# --- 1. Baseline Model: Logistic Regression ---
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
@@ -97,7 +91,7 @@ lr_metrics = {
     'PR-AUC': average_precision_score(y_test, y_prob_lr)
 }
 
-# --- XGBoost Honest Model ---
+# --- 2. Main Model: XGBoost Classifier ---
 xgb_model = XGBClassifier(
     n_estimators=150,
     max_depth=4,
@@ -120,15 +114,17 @@ xgb_metrics = {
     'PR-AUC': average_precision_score(y_test, y_prob_xgb)
 }
 
-print("\n--- HONEST MODEL PERFORMANCE METRICS ---")
+print("\n==================================================")
+print("   CLEAN DATASET MODEL PERFORMANCE METRICS        ")
+print("==================================================")
 comparison_df = pd.DataFrame({
     'Logistic Regression (Baseline)': lr_metrics,
-    'XGBoost (Honest Model)': xgb_metrics
+    'XGBoost Classifier (Main Model)': xgb_metrics
 }).T
 
 print(comparison_df.round(4).to_string())
 
-print("\n--- HONEST XGBoost CONFUSION MATRIX ---")
+print("\n--- Clean XGBoost Confusion Matrix ---")
 cm = confusion_matrix(y_test, y_pred_xgb)
 tn, fp, fn, tp = cm.ravel()
 print(f"True Negatives (TN):  {tn:,}")
@@ -139,42 +135,50 @@ print(f"True Positives (TP):  {tp:,}")
 plt.figure(figsize=(7, 6))
 disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=['Not Ready (0)', 'Upsell Ready (1)'])
 disp.plot(cmap='Blues', values_format='d')
-plt.title('Honest XGBoost Confusion Matrix (Test Set)', fontsize=13, fontweight='bold', pad=12)
+plt.title('Clean XGBoost Confusion Matrix (Test Set)', fontsize=13, fontweight='bold', pad=12)
 plt.tight_layout()
 cm_plot_path = os.path.join(PLOTS_DIR, "confusion_matrix.png")
 plt.savefig(cm_plot_path, dpi=300)
 plt.close()
-print(f"Saved honest confusion matrix plot: {cm_plot_path}")
+print(f"Saved confusion matrix plot: {cm_plot_path}")
 
-print("\n--- HONEST FEATURE IMPORTANCE RANKING ---")
+print("\n--- Clean XGBoost Feature Importances ---")
 importances = xgb_model.feature_importances_
-honest_fi_df = pd.DataFrame({
+fi_df = pd.DataFrame({
     'Feature': honest_features,
     'Importance': importances
 }).sort_values(by='Importance', ascending=False).reset_index(drop=True)
 
-print(honest_fi_df.to_string(index=True))
+print(fi_df.to_string(index=True))
 
-# Plot Honest Feature Importances
 plt.figure(figsize=(9, 5))
-sns.barplot(data=honest_fi_df, x='Importance', y='Feature', hue='Feature', palette='mako', legend=False)
-plt.title('Honest XGBoost Feature Importances (Leakage-Free)', fontsize=13, fontweight='bold', pad=12)
+sns.barplot(data=fi_df, x='Importance', y='Feature', hue='Feature', palette='mako', legend=False)
+plt.title('Clean XGBoost Feature Importances (Leakage-Free & Deduplicated)', fontsize=13, fontweight='bold', pad=12)
 plt.xlabel('XGBoost Gain Importance', fontsize=11)
 plt.tight_layout()
 fi_plot_path = os.path.join(PLOTS_DIR, "feature_importances.png")
 plt.savefig(fi_plot_path, dpi=300)
 plt.close()
-print(f"Saved honest feature importances plot: {fi_plot_path}")
+print(f"Saved feature importances plot: {fi_plot_path}")
 
-print("\n--- Saving Honest Model Artifact ---")
-model_artifact = {
+# Initialize SHAP explainer for final artifact
+import shap
+explainer = shap.TreeExplainer(xgb_model)
+
+# Save updated dataset
+df.to_csv(PROCESSED_DATA_PATH, index=False)
+
+# Save final model artifact package
+final_artifact = {
     'model': xgb_model,
+    'explainer': explainer,
     'scaler': scaler,
     'feature_cols': honest_features,
+    'guardrail_threshold': {'CustServ_Calls_Max': 3},
     'metrics': xgb_metrics,
     'lr_metrics': lr_metrics
 }
 
-model_save_path = os.path.join(MODELS_DIR, "upsell_xgboost_model.joblib")
-joblib.dump(model_artifact, model_save_path)
-print(f"Successfully saved honest trained model pipeline to {model_save_path}")
+final_model_path = os.path.join(MODELS_DIR, "final_upsell_model.joblib")
+joblib.dump(final_artifact, final_model_path)
+print(f"\nSaved updated clean model artifact package to {final_model_path}")
