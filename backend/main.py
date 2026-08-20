@@ -7,7 +7,8 @@ from pydantic import BaseModel, Field
 import pandas as pd
 
 # Add project root directory to python path for module imports
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.normpath(os.path.join(BASE_DIR, ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
@@ -15,7 +16,7 @@ from src.predict import predict_customer_upsell, load_upsell_pipeline
 from src.shap_explainer import explain_customer_prediction
 
 # Data path for lookup
-PROCESSED_DATA_PATH = os.path.join(PROJECT_ROOT, "data", "processed", "cdr_features.csv")
+PROCESSED_DATA_PATH = os.path.normpath(os.path.join(BASE_DIR, "..", "data", "processed", "cdr_features.csv"))
 
 app = FastAPI(
     title="Telco Customer Upsell Classification API",

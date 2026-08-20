@@ -31,6 +31,7 @@ data/raw/*
 !data/raw/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
+!data/processed/cdr_features.csv
 models/*.pkl
 !models/.gitkeep
 !models/*.joblib
