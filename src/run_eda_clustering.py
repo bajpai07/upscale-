@@ -10,7 +10,7 @@ from sklearn.metrics import silhouette_score
 from sklearn.decomposition import PCA
 
 # Configure directories
-PROJECT_DIR = r"c:\Users\bajpa\OneDrive\Desktop\Hackathon"
+PROJECT_DIR = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 RAW_DATA_PATH = os.path.join(PROJECT_DIR, "data", "raw", "CDR-Call-Details.csv")
 PROCESSED_DATA_PATH = os.path.join(PROJECT_DIR, "data", "processed", "cdr_features.csv")
 PLOTS_DIR = os.path.join(PROJECT_DIR, "notebooks", "plots")

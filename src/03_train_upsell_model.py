@@ -16,7 +16,7 @@ from sklearn.metrics import (
 from xgboost import XGBClassifier
 
 # Configure directory paths
-PROJECT_DIR = r"c:\Users\bajpa\OneDrive\Desktop\Hackathon"
+PROJECT_DIR = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 PROCESSED_DATA_PATH = os.path.join(PROJECT_DIR, "data", "processed", "cdr_features.csv")
 MODELS_DIR = os.path.join(PROJECT_DIR, "models")
 PLOTS_DIR = os.path.join(PROJECT_DIR, "notebooks", "plots")

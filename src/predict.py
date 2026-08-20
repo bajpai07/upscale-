@@ -2,8 +2,8 @@ import os
 import joblib
 import pandas as pd
 import numpy as np
-
-DEFAULT_MODEL_PATH = r"c:\Users\bajpa\OneDrive\Desktop\Hackathon\models\final_upsell_model.joblib"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_MODEL_PATH = os.path.normpath(os.path.join(BASE_DIR, "..", "models", "final_upsell_model.joblib"))
 
 _pipeline_cache = None
 
